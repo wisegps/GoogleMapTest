@@ -10,8 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import googlemap.WGoogleMap;
-
+import com.android.volley.VolleyError;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -20,13 +19,16 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
-import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import android.OnFailure;
+import android.OnSuccess;
+import android.WGeocoder;
+import android.WGoogleMap;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Color;
@@ -64,9 +66,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);  
         googleMap = mapFragment.getMap();
         wgoogleMap = new WGoogleMap(googleMap);
-        
-      
-        
     	// Create an instance of GoogleAPIClient.
     	if (mGoogleApiClient == null) {
     	    mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -92,8 +91,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     	mGoogleApiClient.disconnect();
     	Log.d("LOACTION_GOOGLE", "断开。。。");
     }
-    
-    
 
 	@Override
 	public void onMapReady(GoogleMap map) {
@@ -106,7 +103,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 		map.setOnMapClickListener(onMapClickListener);//在Google地图点击事件
 	}
 
-	
 	/**
 	 * Google地图点击事件
 	 */
@@ -118,7 +114,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 			Toast.makeText(mContext, "arg0:" + arg0.latitude, Toast.LENGTH_LONG).show();
 			LatLng latlng = new LatLng(arg0.latitude, arg0.longitude);
 			googleMap.addMarker(new MarkerOptions().position(latlng).title("黄河之水天上来，黄河之水天上来黄河之水天上来"));//添加标志
-			
 		}
 	};
 	
@@ -137,7 +132,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 		LatLng end   = new LatLng(Double.valueOf(22.57), Double.valueOf(113.97));
 		wgoogleMap.drawLine(getPoints(), Color.RED, 5);
 		wgoogleMap.drawLine(start, end, Color.BLUE, 8); 
-		wgoogleMap.setMyLocationListener(mGoogleApiClient, 20, listener);
+		wgoogleMap.setMyLocationListener(mGoogleApiClient, 10, listener);
 	}
 
 	@Override
@@ -204,13 +199,28 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 			if (location == null || googleMap == null){
 				return;// map view 销毁后不在处理新接收的位置
 			}
-				
 			drawPhoneLocation(location.getLatitude(), location.getLongitude());
-			
-			Log.d("LOACTION_GOOGLE","我的位置" +"纬度:" + location.getLatitude() 
-					+ "   " + "经度:" + location.getLongitude());
+			Log.d("LOACTION_GOOGLE","我的位置" +"纬度:" + location.getLatitude() + "   " + "经度:" + location.getLongitude());
+			LatLng start = new LatLng(Double.valueOf(22.58), Double.valueOf(113.92));
+			LatLng end   = new LatLng(Double.valueOf(22.57), Double.valueOf(113.97));
+			double dis = wgoogleMap.getDistance(start, end, WGoogleMap.DIS_TYPE_KM);
+			Log.d("LOACTION_GOOGLE", "距离： " + dis);
+			final WGeocoder geocoder = new WGeocoder(mContext);
+			geocoder.request(start, new OnSuccess() {
+				
+				@Override
+				protected void onSuccess(String response) {
+					// TODO Auto-generated method stub
+					Log.d("LOACTION_GOOGLE", "地址： " + geocoder.getAddress(response));
+				}
+			}, new OnFailure() {
+				
+				@Override
+				protected void onFailure(VolleyError error) {
+					// TODO Auto-generated method stub
+				}
+			});	
 		}
 	};
-	
-	
+		
 }
